@@ -19,6 +19,8 @@ Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::get('/auth/candidatos', [AuthController::class, 'listadoCandidatosConDetalles']);
     Route::get('/auth/lista-candidatos-total-votos', [AuthController::class, 'listaCandidatosConTotalVotos']);
     Route::post('/auth/ingresar-voto', [AuthController::class, 'ingresarVoto']);
+    Route::put('/auth/candidatos/{id}', [AuthController::class, 'actualizarCandidato']);
+    Route::delete('/auth/candidatos/{id}', [AuthController::class, 'eliminarCandidato']);
 
 
 });

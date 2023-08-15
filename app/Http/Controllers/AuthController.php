@@ -13,6 +13,8 @@ use App\Models\Candidato;
 use App\Models\TipoCandidato;
 use App\Models\Voto;
 use Illuminate\Support\Facades\DB;
+use OpenApi\Annotations as OA;
+
 
 
 
@@ -401,6 +403,144 @@ public function ingresarVoto(Request $request) {
     } catch (\Throwable $th) {
         return response()->json([
             'status' => false,
+            'message' => $th->getMessage()
+        ], 500);
+    }
+}
+/**
+ * @OA\Put(
+ *     path="/api/auth/candidatos/{id}",
+ *     summary="Actualizar información de candidato",
+ *     description="Actualiza la información de un candidato específico.",
+ *     tags={"Candidatos"},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID del candidato a actualizar",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(ref="#/components/schemas/CandidatoUpdateRequest")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Candidato actualizado exitosamente",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Candidato actualizado exitosamente")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Candidato no encontrado",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Candidato no encontrado")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Mensaje de error")
+ *         )
+ *     )
+ * )
+ */
+public function actualizarCandidato(Request $request, $id)
+{
+    try {
+        $candidato = Candidato::find($id);
+
+        if (!$candidato) {
+            return response()->json([
+                'message' => 'Candidato no encontrado'
+            ], 404);
+        }
+
+        // Validar los campos que deseas actualizar
+        $validateData = $request->validate([
+            'descripcion' => 'required|max:200',
+            'idlista' => 'required|exists:listas,id',
+            'idtipocandidato' => 'required|exists:tipocandidatos,id',
+            'foto' => 'nullable|string|max:100',
+            'estado' => 'nullable|boolean'
+        ]);
+
+        // Actualizar los campos del candidato
+        $candidato->update($validateData);
+
+        return response()->json([
+            'message' => 'Candidato actualizado exitosamente'
+        ], 200);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'message' => $th->getMessage()
+        ], 500);
+    }
+}
+/**
+ * @OA\Delete(
+ *     path="/api/auth/candidatos/{id}",
+ *     summary="Eliminar candidato por ID",
+ *     description="Elimina un candidato por su ID.",
+ *     tags={"Candidatos"},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID del candidato a eliminar",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Candidato eliminado exitosamente",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Candidato eliminado exitosamente")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Candidato no encontrado",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Candidato no encontrado")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Mensaje de error")
+ *         )
+ *     )
+ * )
+ */
+public function eliminarCandidato($id)
+{
+    try {
+        $candidato = Candidato::find($id);
+
+        if (!$candidato) {
+            return response()->json([
+                'message' => 'Candidato no encontrado'
+            ], 404);
+        }
+
+        $candidato->delete();
+
+        return response()->json([
+            'message' => 'Candidato eliminado exitosamente'
+        ], 200);
+
+    } catch (\Throwable $th) {
+        return response()->json([
             'message' => $th->getMessage()
         ], 500);
     }
