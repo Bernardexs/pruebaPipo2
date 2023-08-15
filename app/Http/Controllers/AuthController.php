@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Candidato;
 use App\Models\TipoCandidato;
 use App\Models\Voto;
+use Illuminate\Support\Facades\DB;
+
 
 
 class AuthController extends Controller
@@ -262,6 +264,52 @@ class AuthController extends Controller
             ], 500);
         }
     }
+  /**
+ * @OA\Get(
+ *     path="/api/auth/lista-candidatos-total-votos",
+ *     summary="Listado de candidatos con total de votos por lista",
+ *     description="Muestra un listado de los candidatos con la suma total de votos por lista.",
+ *     tags={"Candidatos"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Listado de candidatos con total de votos por lista",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="lista_candidatos", type="array", @OA\Items(
+ *                 @OA\Property(property="idlista", type="integer", example=1),
+ *                 @OA\Property(property="nombre_candidato", type="string", example="Nombre del candidato"),
+ *                 @OA\Property(property="total_votos", type="integer", example=100)
+ *             ))
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Mensaje de error")
+ *         )
+ *     )
+ * )
+ */
+public function listaCandidatosConTotalVotos() {
+    try {
+        $listaCandidatos = Candidato::with(['lista', 'votos'])
+            ->select('idlista', 'descripcion as nombre_candidato', \DB::raw('SUM(votos.votos) as total_votos'))
+            ->join('votos', 'candidatos.id', '=', 'votos.idcandidato')
+            ->groupBy('idlista', 'nombre_candidato')
+            ->get();
+        
+        return response()->json([
+            'lista_candidatos' => $listaCandidatos,
+        ], 200);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'message' => $th->getMessage()
+        ], 500);
+    }
+}
 
 
 }

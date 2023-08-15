@@ -17,6 +17,7 @@ use App\Http\Controllers\Personas;
 
 Route::group(['middleware' => ["auth:sanctum"]], function () {
     Route::get('/auth/candidatos', [AuthController::class, 'listadoCandidatosConDetalles']);
+    Route::get('/auth/lista-candidatos-total-votos', [AuthController::class, 'listaCandidatosConTotalVotos']);
 
 });
 
