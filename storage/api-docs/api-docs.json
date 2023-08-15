@@ -307,12 +307,12 @@
                 "tags": [
                     "Candidatos"
                 ],
-                "summary": "Listado de candidatos con total de votos por lista",
-                "description": "Muestra un listado de los candidatos con la suma total de votos por lista.",
+                "summary": "Listado de candidatos con total de votos",
+                "description": "Muestra un listado de los candidatos con el total de votos por candidato y detalles de la lista.",
                 "operationId": "dc274efc8a558e537bfb929d136ea3b3",
                 "responses": {
                     "200": {
-                        "description": "Listado de candidatos con total de votos por lista",
+                        "description": "Listado de candidatos con total de votos",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -330,8 +330,37 @@
                                                         "example": "Nombre del candidato"
                                                     },
                                                     "total_votos": {
-                                                        "type": "integer",
-                                                        "example": 100
+                                                        "type": "string",
+                                                        "example": "Total de votos"
+                                                    },
+                                                    "lista": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "descripcion": {
+                                                                "type": "string",
+                                                                "example": "Descripción de la lista"
+                                                            },
+                                                            "numero": {
+                                                                "type": "string",
+                                                                "example": "Número de la lista"
+                                                            },
+                                                            "foto": {
+                                                                "type": "string",
+                                                                "example": "URL de la foto de la lista"
+                                                            },
+                                                            "estado": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "votos": {
+                                                        "type": "array",
+                                                        "items": {}
                                                     }
                                                 },
                                                 "type": "object"
@@ -349,6 +378,78 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mensaje de error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/ingresar-voto": {
+            "post": {
+                "tags": [
+                    "Votos"
+                ],
+                "summary": "Ingresar un voto",
+                "description": "Registra un voto para un candidato.",
+                "operationId": "35be6f4cee967bfa60a73caf943d8fe8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "idcandidato": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "votos": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Voto registrado exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Voto registrado exitosamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno del servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
                                             "example": "Mensaje de error"

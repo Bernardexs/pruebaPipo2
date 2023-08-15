@@ -264,21 +264,31 @@ class AuthController extends Controller
             ], 500);
         }
     }
-  /**
+ /**
  * @OA\Get(
  *     path="/api/auth/lista-candidatos-total-votos",
- *     summary="Listado de candidatos con total de votos por lista",
- *     description="Muestra un listado de los candidatos con la suma total de votos por lista.",
+ *     summary="Listado de candidatos con total de votos",
+ *     description="Muestra un listado de candidatos con el total de votos por candidato.",
  *     tags={"Candidatos"},
  *     @OA\Response(
  *         response=200,
- *         description="Listado de candidatos con total de votos por lista",
+ *         description="Listado de candidatos con total de votos",
  *         @OA\JsonContent(
  *             type="object",
  *             @OA\Property(property="lista_candidatos", type="array", @OA\Items(
  *                 @OA\Property(property="idlista", type="integer", example=1),
  *                 @OA\Property(property="nombre_candidato", type="string", example="Nombre del candidato"),
- *                 @OA\Property(property="total_votos", type="integer", example=100)
+ *                 @OA\Property(property="total_votos", type="integer", example=10),
+ *                 @OA\Property(property="lista", type="object",
+ *                     @OA\Property(property="id", type="integer", example=1),
+ *                     @OA\Property(property="descripcion", type="string", example="Descripción de la lista"),
+ *                     @OA\Property(property="numero", type="string", example="Número de la lista")
+ *                 ),
+ *                 @OA\Property(property="votos", type="array", @OA\Items(
+ *                     @OA\Property(property="id", type="integer", example=1),
+ *                     @OA\Property(property="votos", type="integer", example=5),
+ *                     // Otros campos de los votos
+ *                 ))
  *             ))
  *         )
  *     ),
@@ -292,20 +302,105 @@ class AuthController extends Controller
  *     )
  * )
  */
-public function listaCandidatosConTotalVotos() {
+public function listaCandidatosConTotalVotos()
+{
     try {
-        $listaCandidatos = Candidato::with(['lista', 'votos'])
-            ->select('idlista', 'descripcion as nombre_candidato', \DB::raw('SUM(votos.votos) as total_votos'))
-            ->join('votos', 'candidatos.id', '=', 'votos.idcandidato')
+        $candidatos = Candidato::with(['lista', 'votos'])
+            ->select('idlista', 'descripcion as nombre_candidato')
+            ->selectRaw('SUM(votos.votos) as total_votos')
             ->groupBy('idlista', 'nombre_candidato')
             ->get();
-        
+
+        $formattedCandidatos = $candidatos->map(function ($candidato) {
+            return [
+                'idlista' => $candidato->idlista,
+                'nombre_candidato' => $candidato->nombre_candidato,
+                'total_votos' => $candidato->total_votos,
+                'lista' => $candidato->lista,
+                'votos' => $candidato->votos,
+            ];
+        });
+
         return response()->json([
-            'lista_candidatos' => $listaCandidatos,
+            'lista_candidatos' => $formattedCandidatos,
         ], 200);
 
     } catch (\Throwable $th) {
         return response()->json([
+            'message' => $th->getMessage()
+        ], 500);
+    }
+}
+
+
+
+
+
+
+/**
+ * @OA\Post(
+ *     path="/api/auth/ingresar-voto",
+ *     summary="Ingresar un voto",
+ *     description="Registra un voto para un candidato.",
+ *     tags={"Votos"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="idcandidato", type="integer", example=1),
+ *             @OA\Property(property="votos", type="integer", example=1)
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Voto registrado exitosamente",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="status", type="boolean", example=true),
+ *             @OA\Property(property="message", type="string", example="Voto registrado exitosamente")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Error interno del servidor",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="status", type="boolean", example=false),
+ *             @OA\Property(property="message", type="string", example="Mensaje de error")
+ *         )
+ *     )
+ * )
+ */
+public function ingresarVoto(Request $request) {
+    try {
+        $validateVoto = Validator::make($request->all(), 
+        [
+            'idcandidato' => 'required|integer',
+            'votos' => 'required|integer|min:1'
+        ]);
+
+        if ($validateVoto->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Existen campos vacíos o inválidos',
+                'errors' => $validateVoto->errors()
+            ], 401);
+        }
+
+        $voto = new Voto();
+        $voto->idcandidato = $request->idcandidato;
+        $voto->votos = $request->votos;
+        $voto->user_id = Auth::id(); // Asigna el ID del usuario autenticado
+        $voto->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Voto registrado exitosamente'
+        ], 200);
+
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => false,
             'message' => $th->getMessage()
         ], 500);
     }

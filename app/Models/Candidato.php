@@ -22,4 +22,9 @@ class Candidato extends Model
     {
         return $this->belongsTo(TipoCandidato::class, 'idtipocandidato');
     }
+    public function votos()
+{
+    return $this->hasMany(Voto::class, 'idcandidato', 'id');
+}
+
 }
